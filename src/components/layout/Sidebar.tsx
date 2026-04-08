@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuthStore, useThemeStore } from "@/lib/store";
+import { useAuthStore, useThemeStore, ACCENT_THEMES, AccentTheme } from "@/lib/store";
 
 const navItems = [
   {
@@ -37,18 +37,19 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
+  const { theme, accent, toggleTheme, setAccent } = useThemeStore();
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     router.push("/login");
   }
 
   return (
     <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-screen">
+      {/* Logo */}
       <div className="px-4 py-4 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--accent-600)" }}>
             <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
             </svg>
@@ -73,7 +74,6 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
                 </svg>
               )}
             </button>
-            {/* Close button — mobile only */}
             {onClose && (
               <button
                 onClick={onClose}
@@ -88,6 +88,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
         </div>
       </div>
 
+      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -98,9 +99,10 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
               onClick={onClose}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 active
-                  ? "bg-indigo-600 text-white"
+                  ? "text-white"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
+              style={active ? { backgroundColor: "var(--accent-600)" } : {}}
             >
               {item.icon}
               {item.label}
@@ -109,14 +111,41 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
         })}
       </nav>
 
+      {/* Theme picker */}
+      <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800">
+        <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2.5">Өнгөт загвар</p>
+        <div className="flex gap-2 flex-wrap">
+          {(Object.entries(ACCENT_THEMES) as [AccentTheme, typeof ACCENT_THEMES[AccentTheme]][]).map(([key, cfg]) => (
+            <button
+              key={key}
+              title={cfg.label}
+              onClick={() => setAccent(key)}
+              className="w-6 h-6 rounded-full transition-all duration-150 hover:scale-110 flex-shrink-0"
+              style={{
+                backgroundColor: cfg.preview,
+                outline: accent === key ? `2px solid ${cfg.preview}` : "none",
+                outlineOffset: "2px",
+                transform: accent === key ? "scale(1.15)" : undefined,
+              }}
+            />
+          ))}
+        </div>
+        <div className="mt-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {ACCENT_THEMES[accent].label}
+          </p>
+        </div>
+      </div>
+
+      {/* User */}
       <div className="px-3 py-4 border-t border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3 px-3 py-2 mb-1">
-          <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            {user?.name?.charAt(0) ?? "А"}
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: "var(--accent-500)" }}>
+            {user?.email?.charAt(0).toUpperCase() ?? "А"}
           </div>
           <div className="min-w-0">
-            <p className="text-slate-900 dark:text-white text-sm font-medium truncate">{user?.name}</p>
-            <p className="text-slate-500 text-xs truncate">{user?.email}</p>
+            <p className="text-slate-900 dark:text-white text-sm font-medium truncate">{user?.email}</p>
+            <p className="text-slate-500 text-xs truncate capitalize">{user?.role}</p>
           </div>
         </div>
         <button

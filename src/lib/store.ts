@@ -1,20 +1,104 @@
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Website, AdminUser, SectionContent } from "./types";
+import { AdminUser } from "./types";
+import { login as apiLogin, logout as apiLogout, setApiTokens, setOnRefreshFailed } from "./api";
+
+// ─── Accent Themes ────────────────────────────────────────────────────────────
+
+export const ACCENT_THEMES = {
+  indigo: {
+    label: "Индиго",
+    preview: "#6366f1",
+    vars: {
+      "--accent-600": "#4f46e5",
+      "--accent-500": "#6366f1",
+      "--accent-400": "#818cf8",
+      "--accent-faint": "rgba(99,102,241,0.1)",
+      "--accent-faint-hover": "rgba(99,102,241,0.2)",
+      "--accent-border": "rgba(99,102,241,0.5)",
+    },
+  },
+  blue: {
+    label: "Цэнхэр",
+    preview: "#3b82f6",
+    vars: {
+      "--accent-600": "#2563eb",
+      "--accent-500": "#3b82f6",
+      "--accent-400": "#60a5fa",
+      "--accent-faint": "rgba(59,130,246,0.1)",
+      "--accent-faint-hover": "rgba(59,130,246,0.2)",
+      "--accent-border": "rgba(59,130,246,0.5)",
+    },
+  },
+  violet: {
+    label: "Нил",
+    preview: "#8b5cf6",
+    vars: {
+      "--accent-600": "#7c3aed",
+      "--accent-500": "#8b5cf6",
+      "--accent-400": "#a78bfa",
+      "--accent-faint": "rgba(139,92,246,0.1)",
+      "--accent-faint-hover": "rgba(139,92,246,0.2)",
+      "--accent-border": "rgba(139,92,246,0.5)",
+    },
+  },
+  emerald: {
+    label: "Ногоон",
+    preview: "#10b981",
+    vars: {
+      "--accent-600": "#059669",
+      "--accent-500": "#10b981",
+      "--accent-400": "#34d399",
+      "--accent-faint": "rgba(16,185,129,0.1)",
+      "--accent-faint-hover": "rgba(16,185,129,0.2)",
+      "--accent-border": "rgba(16,185,129,0.5)",
+    },
+  },
+  rose: {
+    label: "Ягаан",
+    preview: "#f43f5e",
+    vars: {
+      "--accent-600": "#e11d48",
+      "--accent-500": "#f43f5e",
+      "--accent-400": "#fb7185",
+      "--accent-faint": "rgba(244,63,94,0.1)",
+      "--accent-faint-hover": "rgba(244,63,94,0.2)",
+      "--accent-border": "rgba(244,63,94,0.5)",
+    },
+  },
+  amber: {
+    label: "Шар",
+    preview: "#f59e0b",
+    vars: {
+      "--accent-600": "#d97706",
+      "--accent-500": "#f59e0b",
+      "--accent-400": "#fbbf24",
+      "--accent-faint": "rgba(245,158,11,0.1)",
+      "--accent-faint-hover": "rgba(245,158,11,0.2)",
+      "--accent-border": "rgba(245,158,11,0.5)",
+    },
+  },
+} as const;
+
+export type AccentTheme = keyof typeof ACCENT_THEMES;
 
 // ─── Theme Store ──────────────────────────────────────────────────────────────
 
 interface ThemeState {
   theme: "dark" | "light";
+  accent: AccentTheme;
   toggleTheme: () => void;
+  setAccent: (accent: AccentTheme) => void;
 }
 
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
       theme: "dark",
+      accent: "indigo",
       toggleTheme: () => set((s) => ({ theme: s.theme === "dark" ? "light" : "dark" })),
+      setAccent: (accent) => set({ accent }),
     }),
     { name: "cms-theme" }
   )
@@ -24,119 +108,58 @@ export const useThemeStore = create<ThemeState>()(
 
 interface AuthState {
   user: AdminUser | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  /** Called by ThemeProvider / API module to sync tokens after load */
+  syncTokens: () => void;
 }
-
-const MOCK_ADMIN: AdminUser = {
-  id: "admin-001",
-  name: "Админ",
-  email: "admin@company.mn",
-  role: "admin",
-  companyName: "Манай компани",
-};
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
+      accessToken: null,
+      refreshToken: null,
+
       login: async (email, password) => {
-        await new Promise((r) => setTimeout(r, 600));
-        if (email === "admin@company.mn" && password === "password123") {
-          set({ user: MOCK_ADMIN });
+        try {
+          const res = await apiLogin(email, password);
+          if (!res.success) return false;
+          const user: AdminUser = {
+            email: res.user.email,
+            role: res.user.role,
+            projects: res.user.projects,
+          };
+          set({ user, accessToken: res.accessToken, refreshToken: res.refreshToken });
+          setApiTokens(res.accessToken, res.refreshToken);
           return true;
+        } catch {
+          return false;
         }
-        return false;
       },
-      logout: () => set({ user: null }),
+
+      logout: async () => {
+        const { refreshToken } = get();
+        // Best-effort API logout
+        if (refreshToken) {
+          try { await apiLogout(refreshToken); } catch {}
+        }
+        set({ user: null, accessToken: null, refreshToken: null });
+        setApiTokens(null, null);
+      },
+
+      syncTokens: () => {
+        const { accessToken, refreshToken } = get();
+        setApiTokens(accessToken, refreshToken);
+        // Wire logout callback for 401 cascades
+        setOnRefreshFailed(() => {
+          set({ user: null, accessToken: null, refreshToken: null });
+          setApiTokens(null, null);
+        });
+      },
     }),
     { name: "cms-auth" }
-  )
-);
-
-// ─── Websites Store ───────────────────────────────────────────────────────────
-
-interface WebsitesState {
-  websites: Website[];
-  createWebsite: (data: { name: string; templateId: string; companyName: string }) => Website;
-  updateWebsite: (id: string, updates: Partial<Website>) => void;
-  updateSectionContent: (websiteId: string, sectionId: string, values: Record<string, string>) => void;
-  publishWebsite: (id: string) => void;
-  archiveWebsite: (id: string) => void;
-  deleteWebsite: (id: string) => void;
-  getWebsite: (id: string) => Website | undefined;
-}
-
-export const useWebsitesStore = create<WebsitesState>()(
-  persist(
-    (set, get) => ({
-      websites: [],
-
-      createWebsite: (data) => {
-        const website: Website = {
-          id: `site-${Date.now()}`,
-          name: data.name,
-          templateId: data.templateId,
-          companyName: data.companyName,
-          status: "draft",
-          content: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        set((s) => ({ websites: [website, ...s.websites] }));
-        return website;
-      },
-
-      updateWebsite: (id, updates) => {
-        set((s) => ({
-          websites: s.websites.map((w) =>
-            w.id === id ? { ...w, ...updates, updatedAt: new Date().toISOString() } : w
-          ),
-        }));
-      },
-
-      updateSectionContent: (websiteId, sectionId, values) => {
-        set((s) => ({
-          websites: s.websites.map((w) => {
-            if (w.id !== websiteId) return w;
-            const existing = w.content.find((c) => c.sectionId === sectionId);
-            let newContent: SectionContent[];
-            if (existing) {
-              newContent = w.content.map((c) =>
-                c.sectionId === sectionId ? { ...c, values: { ...c.values, ...values } } : c
-              );
-            } else {
-              newContent = [...w.content, { sectionId, values }];
-            }
-            return { ...w, content: newContent, updatedAt: new Date().toISOString() };
-          }),
-        }));
-      },
-
-      publishWebsite: (id) => {
-        set((s) => ({
-          websites: s.websites.map((w) =>
-            w.id === id
-              ? { ...w, status: "published", publishedAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
-              : w
-          ),
-        }));
-      },
-
-      archiveWebsite: (id) => {
-        set((s) => ({
-          websites: s.websites.map((w) =>
-            w.id === id ? { ...w, status: "archived", updatedAt: new Date().toISOString() } : w
-          ),
-        }));
-      },
-
-      deleteWebsite: (id) => {
-        set((s) => ({ websites: s.websites.filter((w) => w.id !== id) }));
-      },
-
-      getWebsite: (id) => get().websites.find((w) => w.id === id),
-    }),
-    { name: "cms-websites" }
   )
 );

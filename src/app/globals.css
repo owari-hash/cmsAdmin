@@ -2,6 +2,16 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+/* Default accent (indigo) — overridden by ThemeProvider */
+:root {
+  --accent-600: #4f46e5;
+  --accent-500: #6366f1;
+  --accent-400: #818cf8;
+  --accent-faint: rgba(99,102,241,0.1);
+  --accent-faint-hover: rgba(99,102,241,0.2);
+  --accent-border: rgba(99,102,241,0.5);
+}
+
 * {
   box-sizing: border-box;
 }

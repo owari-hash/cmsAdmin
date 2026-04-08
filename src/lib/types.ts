@@ -1,64 +1,76 @@
-// ─── Template types (from Super Admin) ───────────────────────────────────────
+// ─── API v2 types ─────────────────────────────────────────────────────────────
 
-export type FieldType = "text" | "textarea" | "image" | "url" | "color" | "richtext";
-
-export interface TemplateField {
-  id: string;
-  label: string;
-  type: FieldType;
-  placeholder?: string;
-  required?: boolean;
-  defaultValue?: string;
+export interface ApiUserProject {
+  projectName: string;
+  roles: string[];
 }
 
-export interface TemplateSection {
-  id: string;
-  name: string;
-  description: string;
-  fields: TemplateField[];
+export interface ApiUser {
+  email: string;
+  role: string;
+  projects: ApiUserProject[];
 }
 
-export interface Template {
-  id: string;
-  name: string;
-  description: string;
-  thumbnail: string;
-  category: "business" | "portfolio" | "restaurant" | "ecommerce" | "landing";
-  sections: TemplateSection[];
-  createdAt: string;
-  isPremium?: boolean;
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
 }
 
-// ─── Website (Admin-created) ──────────────────────────────────────────────────
+// ─── Projects ─────────────────────────────────────────────────────────────────
 
-export type WebsiteStatus = "draft" | "published" | "archived";
-
-export interface SectionContent {
-  sectionId: string;
-  values: Record<string, string>;
-}
-
-export interface Website {
-  id: string;
-  name: string;
-  templateId: string;
-  status: WebsiteStatus;
+export interface Project {
+  projectName: string;
+  status?: string;        // running | stopped | building | unknown
   domain?: string;
-  content: SectionContent[];
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string;
-  companyName: string;
-  companyLogo?: string;
+  [key: string]: unknown; // other fields the backend may return
 }
 
-// ─── Auth ─────────────────────────────────────────────────────────────────────
+// ─── Design ───────────────────────────────────────────────────────────────────
+
+export interface DesignTheme {
+  primaryColor: string;
+  secondaryColor: string;
+  fontFamily: string;
+  darkMode: boolean;
+  customTokens?: Record<string, string>;
+}
+
+export interface DesignPage {
+  route: string;
+  title: string;
+  description: string;
+}
+
+export interface Design {
+  projectName: string;
+  domain: string;
+  theme: DesignTheme;
+  pages: DesignPage[];
+}
+
+// ─── Components ───────────────────────────────────────────────────────────────
+
+export interface ComponentInstance {
+  instanceId: string;
+  componentType: string;
+  pageRoute: string;
+  order: number;
+  props: Record<string, unknown>;
+}
+
+// ─── Domain ───────────────────────────────────────────────────────────────────
+
+export interface DomainBinding {
+  domain: string;
+  upstreamHost?: string;
+  upstreamPort?: number;
+  isEnabled: boolean;
+}
+
+// ─── Legacy admin user (kept for Sidebar display) ────────────────────────────
 
 export interface AdminUser {
-  id: string;
-  name: string;
   email: string;
-  role: "admin";
-  companyName: string;
-  avatar?: string;
+  role: string;
+  projects: ApiUserProject[];
 }

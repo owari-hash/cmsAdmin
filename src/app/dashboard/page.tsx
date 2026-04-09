@@ -39,6 +39,8 @@ export default function DashboardPage() {
           bgClass="bg-[var(--accent-faint)]"
           textClass="text-[var(--accent-500)]"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>}
+          className="animate-fade-in-up"
+          style={{ animationDelay: "0ms" }}
         />
         <StatCard
           label="Ажиллаж байна"
@@ -46,6 +48,8 @@ export default function DashboardPage() {
           bgClass="bg-green-500/10"
           textClass="text-green-600 dark:text-green-400"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+          className="animate-fade-in-up"
+          style={{ animationDelay: "80ms" }}
         />
         <StatCard
           label="Бүтээгдэж байна"
@@ -53,6 +57,8 @@ export default function DashboardPage() {
           bgClass="bg-yellow-500/10"
           textClass="text-yellow-600 dark:text-yellow-400"
           icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
+          className="animate-fade-in-up"
+          style={{ animationDelay: "160ms" }}
         />
       </div>
 
@@ -83,7 +89,7 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {projects.slice(0, 5).map((proj, i) => (
-                <div key={proj.projectName ?? i} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex items-center justify-between gap-3">
+                <div key={proj.projectName ?? i} className="animate-fade-in-up bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex items-center justify-between gap-3 transition-all hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-slate-900/50" style={{ animationDelay: `${i * 60}ms` }}>
                   <div className="min-w-0">
                     <p className="text-slate-900 dark:text-white font-medium truncate">{proj.projectName}</p>
                     {proj.domain && <p className="text-slate-500 text-xs mt-0.5 truncate">{proj.domain as string}</p>}
@@ -106,11 +112,12 @@ export default function DashboardPage() {
         <div>
           <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white mb-4">Миний хандалт</h2>
           <div className="space-y-3">
-            {(user?.projects ?? []).map((p) => (
+            {(user?.projects ?? []).map((p, i) => (
               <Link
                 key={p.projectName}
                 href={`/websites/${p.projectName}/edit`}
-                className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-[var(--accent-border)] rounded-xl p-4 transition-colors group"
+                className="animate-fade-in-up flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-[var(--accent-border)] rounded-xl p-4 transition-all hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-slate-900/50 group"
+                style={{ animationDelay: `${i * 60}ms` }}
               >
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--accent-faint)" }}>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: "var(--accent-500)" }}>
@@ -136,9 +143,9 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ label, value, bgClass, textClass, icon }: { label: string; value: string; bgClass: string; textClass: string; icon: React.ReactNode }) {
+function StatCard({ label, value, bgClass, textClass, icon, className, style }: { label: string; value: string; bgClass: string; textClass: string; icon: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sm:p-5 flex sm:block items-center gap-4">
+    <div className={`bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sm:p-5 flex sm:block items-center gap-4 transition-all hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-slate-900/50 ${className ?? ""}`} style={style}>
       <div className={`w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center flex-shrink-0 sm:mb-3 ${bgClass} ${textClass}`}>{icon}</div>
       <div>
         <p className="text-slate-500 dark:text-slate-400 text-sm">{label}</p>

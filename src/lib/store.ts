@@ -116,10 +116,18 @@ interface AuthState {
   syncTokens: () => void;
 }
 
+const DEV_AUTH = process.env.NEXT_PUBLIC_DEV_AUTH === "1";
+
+const DEV_USER: AdminUser = {
+  email: "dev@local",
+  role: "admin",
+  projects: [],
+};
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      user: null,
+      user: DEV_AUTH ? DEV_USER : null,
       accessToken: null,
       refreshToken: null,
 

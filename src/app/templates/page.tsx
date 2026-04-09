@@ -5,12 +5,35 @@ import { useAuthStore } from "@/lib/store";
 import { getDesign } from "@/lib/api";
 import { Design } from "@/lib/types";
 
+const DEV_AUTH = process.env.NEXT_PUBLIC_DEV_AUTH === "1";
+
+const MOCK_DESIGN: Design & { error?: boolean } = {
+  projectName: "mock-landing",
+  domain: "example.com",
+  theme: {
+    primaryColor: "#6366f1",
+    secondaryColor: "#0f172a",
+    fontFamily: "Inter",
+    darkMode: false,
+  },
+  pages: [
+    { route: "/", title: "Home", description: "Landing page" },
+    { route: "/about", title: "About", description: "About us" },
+  ],
+};
+
 export default function TemplatesPage() {
   const user = useAuthStore((s) => s.user);
   const [designs, setDesigns] = useState<(Design & { error?: boolean })[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (DEV_AUTH) {
+      setDesigns([MOCK_DESIGN]);
+      setLoading(false);
+      return;
+    }
+
     async function load() {
       if (!user?.projects?.length) {
         setLoading(false);
@@ -77,8 +100,14 @@ export default function TemplatesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {designs.map((design) => (
-            <DesignCard key={design.projectName} design={design} />
+          {designs.map((design, i) => (
+            <div
+              key={design.projectName}
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <DesignCard design={design} />
+            </div>
           ))}
         </div>
       )}
@@ -89,9 +118,10 @@ export default function TemplatesPage() {
 function DesignCard({ design }: { design: Design & { error?: boolean } }) {
   const primary = design.theme?.primaryColor || "#6366f1";
   const secondary = design.theme?.secondaryColor || "#0f172a";
+  const isMock = design.projectName === "mock-landing";
 
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden hover:border-slate-300 dark:hover:border-slate-600 transition-colors group">
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden hover:border-slate-300 dark:hover:border-slate-600 transition-all hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-slate-900/50 group">
       {/* Color preview */}
       <div
         className="h-28 relative flex items-center justify-center"
@@ -99,6 +129,11 @@ function DesignCard({ design }: { design: Design & { error?: boolean } }) {
           background: `linear-gradient(135deg, ${secondary}, ${primary})`,
         }}
       >
+        {isMock && (
+          <span className="absolute top-2 left-2 text-xs bg-white/20 text-white px-2 py-0.5 rounded-full font-medium backdrop-blur-sm">
+            Mock
+          </span>
+        )}
         {design.error ? (
           <span className="text-white/60 text-xs">Дизайн байхгүй</span>
         ) : (
@@ -114,7 +149,7 @@ function DesignCard({ design }: { design: Design & { error?: boolean } }) {
           </div>
         )}
         <div className="absolute top-2 right-2 flex gap-1">
-          {design.theme.darkMode && (
+          {design.theme?.darkMode && (
             <span className="text-xs bg-black/30 text-white px-2 py-0.5 rounded-full">
               Харанхуй
             </span>
@@ -138,7 +173,7 @@ function DesignCard({ design }: { design: Design & { error?: boolean } }) {
           <>
             <p className="text-slate-500 text-xs mb-1">
               Фонт:{" "}
-              <span className="font-medium">{design.theme.fontFamily}</span>
+              <span className="font-medium">{design.theme?.fontFamily}</span>
             </p>
             {design.domain && (
               <p className="text-slate-500 text-xs truncate mb-3">
@@ -149,20 +184,14 @@ function DesignCard({ design }: { design: Design & { error?: boolean } }) {
         )}
 
         <div className="flex gap-2 mt-3">
+          {/* Visual Builder button */}
           <Link
-            href={`/websites/${design.projectName}/edit?tab=design`}
-            className="flex-1 text-center text-white text-sm font-medium py-2 rounded-lg transition-opacity hover:opacity-90"
+            href={`/builder/${design.projectName}`}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white rounded-lg transition-opacity hover:opacity-90 flex-shrink-0"
             style={{ backgroundColor: "var(--accent-600)" }}
           >
-            Засварлах
-          </Link>
-          <Link
-            href={`/preview/${design.projectName}`}
-            target="_blank"
-            className="px-3 py-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-          >
             <svg
-              className="w-4 h-4"
+              className="w-3.5 h-3.5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -171,16 +200,46 @@ function DesignCard({ design }: { design: Design & { error?: boolean } }) {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"
               />
             </svg>
+            Builder
           </Link>
+          {!isMock && (
+            <Link
+              href={`/websites/${design.projectName}/edit?tab=design`}
+              className="flex-1 text-center text-slate-600 dark:text-slate-300 text-sm font-medium py-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            >
+              Засварлах
+            </Link>
+          )}
+          {!isMock && (
+            <Link
+              href={`/preview/${design.projectName}`}
+              target="_blank"
+              className="px-3 py-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+            </Link>
+          )}
         </div>
       </div>
     </div>

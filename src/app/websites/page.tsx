@@ -102,16 +102,17 @@ export default function WebsitesPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {projects.map((project) => (
-            <ProjectRow
-              key={project.projectName}
-              project={project}
-              userRoles={user?.projects?.find((p) => p.projectName === project.projectName)?.roles ?? []}
-              onBuild={() => handleBuild(project.projectName)}
-              onStop={() => handleStop(project.projectName)}
-              buildLoading={actionLoading === `build-${project.projectName}`}
-              stopLoading={actionLoading === `stop-${project.projectName}`}
-            />
+          {projects.map((project, i) => (
+            <div key={project.projectName ?? i} className="animate-fade-in-up" style={{ animationDelay: `${i * 60}ms` }}>
+              <ProjectRow
+                project={project}
+                userRoles={user?.projects?.find((p) => p.projectName === project.projectName)?.roles ?? []}
+                onBuild={() => handleBuild(project.projectName)}
+                onStop={() => handleStop(project.projectName)}
+                buildLoading={actionLoading === `build-${project.projectName}`}
+                stopLoading={actionLoading === `stop-${project.projectName}`}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -140,7 +141,7 @@ function ProjectRow({
   const isBuilding = status === "building";
 
   return (
-    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sm:p-5">
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 sm:p-5 transition-all hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-slate-900/50">
       <div className="flex items-start sm:items-center gap-3 sm:gap-4">
         {/* Icon */}
         <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "var(--accent-faint)" }}>

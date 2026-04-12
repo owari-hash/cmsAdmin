@@ -2,14 +2,14 @@
 
 @variant dark (&:where(.dark, .dark *));
 
-/* Default accent (indigo) — overridden by ThemeProvider */
+/* Default accent (green) — overridden by ThemeProvider */
 :root {
-  --accent-600: #4f46e5;
-  --accent-500: #6366f1;
-  --accent-400: #818cf8;
-  --accent-faint: rgba(99,102,241,0.1);
-  --accent-faint-hover: rgba(99,102,241,0.2);
-  --accent-border: rgba(99,102,241,0.5);
+  --accent-600: #16a34a;
+  --accent-500: #22c55e;
+  --accent-400: #4ade80;
+  --accent-faint: rgba(34,197,94,0.1);
+  --accent-faint-hover: rgba(34,197,94,0.2);
+  --accent-border: rgba(34,197,94,0.5);
 }
 
 * {

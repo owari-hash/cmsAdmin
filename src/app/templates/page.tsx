@@ -5,42 +5,38 @@ import { useAuthStore } from "@/lib/store";
 import { getDesign } from "@/lib/api";
 import { Design } from "@/lib/types";
 
-const DEV_AUTH = process.env.NEXT_PUBLIC_DEV_AUTH === "1";
-
+// Mock landing is always shown — visible on any machine without login
 const MOCK_DESIGN: Design & { error?: boolean } = {
   projectName: "mock-landing",
-  domain: "example.com",
+  domain: "",
   theme: {
-    primaryColor: "#6366f1",
-    secondaryColor: "#0f172a",
+    primaryColor: "#16a34a",
+    secondaryColor: "#052e16",
     fontFamily: "Inter",
     darkMode: false,
   },
   pages: [
-    { route: "/", title: "Home", description: "Landing page" },
-    { route: "/about", title: "About", description: "About us" },
+    { route: "/home",        title: "Нүүр",            description: "Нүүр хуудас" },
+    { route: "/about",       title: "Бидний тухай",    description: "Бидний тухай" },
+    { route: "/services",    title: "Үйл ажиллагаа",  description: "Үйл ажиллагаа" },
+    { route: "/partnership", title: "Хамтран ажиллах", description: "Хамтрал" },
+    { route: "/news",        title: "Мэдээ мэдээлэл",  description: "Мэдээ" },
+    { route: "/contact",     title: "Холбоо барих",    description: "Холбоо барих" },
   ],
 };
 
 export default function TemplatesPage() {
   const user = useAuthStore((s) => s.user);
-  const [designs, setDesigns] = useState<(Design & { error?: boolean })[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [designs, setDesigns] = useState<(Design & { error?: boolean })[]>([MOCK_DESIGN]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (DEV_AUTH) {
-      setDesigns([MOCK_DESIGN]);
-      setLoading(false);
-      return;
-    }
+    if (!user?.projects?.length) return;
 
     async function load() {
-      if (!user?.projects?.length) {
-        setLoading(false);
-        return;
-      }
+      setLoading(true);
       const results = await Promise.all(
-        user.projects.map((p) =>
+        user!.projects.map((p) =>
           getDesign(p.projectName)
             .then((d) => ({ ...d }))
             .catch(() => ({
@@ -57,7 +53,8 @@ export default function TemplatesPage() {
             })),
         ),
       );
-      setDesigns(results);
+      // Keep mock-landing first, then add real designs
+      setDesigns([MOCK_DESIGN, ...results]);
       setLoading(false);
     }
     load();
